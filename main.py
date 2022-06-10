@@ -18,23 +18,24 @@ app = FastAPI()
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-#serializer
+#add a pydantic model, defining the acceptable input fromat.
 class Item(BaseModel):
     id : int
     name : str
     description : str
     price : int
-    on_offer : bool
 
     class Config:
         orm_mode = True
+
+    
 
 
 #db instance
 db = SessionLocal()
 
 @app.get('/home')
-@limiter.limit("5/minute")
+@limiter.limit("300/minute")
 async def homepage(request: Request):
     return {"WORKINGGGG"}
 
@@ -60,7 +61,7 @@ def create_item(item : Item):
         name = item.name,
         price = item.price,
         description = item.description,
-        on_offer = item.on_offer
+        
     )
 
     db_item=db.query(models.Item).filter(models.Item.name==item.name).first()
@@ -82,7 +83,6 @@ def update_an_item(item_id:int,item:Item):
     item_to_update.name=item.name
     item_to_update.price=item.price
     item_to_update.description=item.description
-    item_to_update.on_offer=item.on_offer
 
     db.commit()
 
